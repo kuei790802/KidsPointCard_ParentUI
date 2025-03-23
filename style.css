@@ -1,0 +1,165 @@
+body {
+    font-family: 'Microsoft JhengHei', sans-serif;
+    background-color: #f8f9fa;
+    padding: 20px;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.point-card {
+    padding: 20px;
+}
+
+.points-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.point-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #666;
+    background-color: white;
+}
+
+.point-filled {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.point-crossed {
+    position: relative;
+    background-color: #dc3545;
+}
+
+.point-crossed::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background-color: black;
+    transform: rotate(45deg);
+}
+
+.behavior-card {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.behavior-card:hover {
+    transform: translateY(-3px);
+}
+
+.positive-behavior {
+    background-color: #d4edda;
+    border-left: 5px solid #28a745;
+}
+
+.negative-behavior {
+    background-color: #f8d7da;
+    border-left: 5px solid #dc3545;
+}
+
+.modal-header, .modal-footer {
+    background-color: #f8f9fa;
+}
+
+.child-selector {
+    margin-bottom: 20px;
+}
+
+.add-behavior-btn {
+    width: 100%;
+    border-style: dashed;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.tag {
+    display: inline-block;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: white;
+}
+
+.tag-learning {
+    background-color: #6610f2;
+}
+
+.tag-health {
+    background-color: #20c997;
+}
+
+.tag-responsibility {
+    background-color: #fd7e14;
+}
+
+.tag-habits {
+    background-color: #0dcaf0;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.checkbox-item {
+    width: 50%;
+    margin-bottom: 10px;
+}
+
+/* 添加分頁相關樣式 */
+.points-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.points-pagination button {
+    min-width: 80px;
+}
+
+.points-pagination span {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 添加重置按鈕相關樣式 */
+#resetDataBtn {
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+#resetDataBtn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Toast 樣式 */
+.toast-container {
+    z-index: 1050;
+}
