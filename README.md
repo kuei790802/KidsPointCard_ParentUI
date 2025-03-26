@@ -17,12 +17,12 @@
 - HTML5
 - CSS3
 - JavaScript (ES6+)
-- Bootstrap 5.3.0
+- Bootstrap 5.3.3
 - LocalStorage for data persistence
 
 ## 使用方法
 
-1. 克隆或下載此專案
+1. clone或下載此專案
 2. 在瀏覽器中打開 `index.html` 文件
 3. 開始使用！
 
