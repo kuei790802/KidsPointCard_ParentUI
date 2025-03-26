@@ -1,5 +1,156 @@
-localStorage.clear();
-console.log("localStorage 已清除");
+// localStorage.clear();
+// console.log("localStorage 已清除");
+// Add this to your script.js
+const API_URL = "http://localhost:3000/api";
+
+// Example function to add points
+async function addPoints(childName, points, reason) {
+  try {
+    const response = await fetch(`${API_URL}/points`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ childName, points, reason }),
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Example function to get all points
+async function getAllPoints() {
+  try {
+    const response = await fetch(`${API_URL}/points`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// DataManager object to handle data operations
+const DataManager = {
+  // Get all data from MongoDB
+  async getData() {
+    try {
+      const response = await fetch(`${API_URL}/points`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        // Convert array to object with child names as keys
+        return data.reduce((acc, child) => {
+          acc[child.name] = {
+            points: child.points,
+            positiveBehaviors: child.positiveBehaviors || [],
+            negativeBehaviors: child.negativeBehaviors || []
+          };
+          return acc;
+        }, {});
+      }
+      return DEFAULT_CHILDREN_DATA;
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return DEFAULT_CHILDREN_DATA;
+    }
+  },
+
+  // Save data to MongoDB
+  async saveData(data) {
+    try {
+      // Convert object to array of children
+      const children = Object.entries(data).map(([name, childData]) => ({
+        name,
+        ...childData
+      }));
+      
+      for (const child of children) {
+        await fetch(`${API_URL}/points`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(child)
+        });
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+    }
+  },
+
+  // Update specific child's data
+  async updateChildData(childName, data) {
+    try {
+      await fetch(`${API_URL}/points/${childName}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: childName,
+          ...data
+        })
+      });
+    } catch (error) {
+      console.error("Error updating child data:", error);
+    }
+  },
+
+  // Get behavior counter
+  async getBehaviorCounter() {
+    try {
+      const response = await fetch(`${API_URL}/counter`);
+      const data = await response.json();
+      return data || { positive: 3, negative: 3 };
+    } catch (error) {
+      console.error("Error fetching counter:", error);
+      return { positive: 3, negative: 3 };
+    }
+  },
+
+  // Save behavior counter
+  async saveBehaviorCounter(counter) {
+    try {
+      await fetch(`${API_URL}/counter`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(counter)
+      });
+    } catch (error) {
+      console.error("Error saving counter:", error);
+    }
+  }
+};
+
+// Migration function
+async function migrateToMongoDB() {
+  const localData = JSON.parse(localStorage.getItem("childrenData"));
+  if (localData) {
+    try {
+      for (const [childName, childData] of Object.entries(localData)) {
+        await fetch(`${API_URL}/points`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: childName,
+            ...childData
+          })
+        });
+      }
+      console.log("Data migration completed");
+      localStorage.setItem("dataMigrated", "true");
+    } catch (error) {
+      console.error("Migration error:", error);
+    }
+  }
+}
+
+
 // 修改數據初始化和存儲方式
 const DEFAULT_CHILDREN_DATA = {
   Audrey: {
@@ -74,41 +225,17 @@ const DEFAULT_CHILDREN_DATA = {
   },
 };
 
-// 數據操作相關函數
-const DataManager = {
-  // 獲取所有數據
-  getData() {
-    const savedData = localStorage.getItem("childrenData");
-    return savedData ? JSON.parse(savedData) : DEFAULT_CHILDREN_DATA;
-  },
 
-  // 保存所有數據
-  saveData(data) {
-    localStorage.setItem("childrenData", JSON.stringify(data));
-  },
-
-  // 更新特定小孩的數據
-  updateChildData(childName, data) {
-    const allData = this.getData();
-    allData[childName] = data;
-    this.saveData(allData);
-  },
-
-  // 獲取計數器
-  getBehaviorCounter() {
-    const counter = localStorage.getItem("behaviorIdCounter");
-    return counter ? JSON.parse(counter) : { positive: 3, negative: 3 };
-  },
-
-  // 保存計數器
-  saveBehaviorCounter(counter) {
-    localStorage.setItem("behaviorIdCounter", JSON.stringify(counter));
-  },
-};
 
 // 修改初始化部分
-let childrenData = DataManager.getData();
-let behaviorIdCounter = DataManager.getBehaviorCounter();
+let childrenData;
+let behaviorIdCounter;
+
+// Initialize data
+async function initializeData() {
+  childrenData = await DataManager.getData();
+  behaviorIdCounter = await DataManager.getBehaviorCounter();
+}
 let currentChild = localStorage.getItem("currentChild") || "Audrey";
 
 // 添加分頁相關變量
@@ -125,22 +252,28 @@ const negativeBehaviorsContainer = document.getElementById("negativeBehaviors");
 
 // Modal元素
 const addPositiveModal = new bootstrap.Modal(
-  document.getElementById("addPositiveModal")
+  document.getElementById("addPositiveModal"),
+  { focus: false }
 );
 const addNegativeModal = new bootstrap.Modal(
-  document.getElementById("addNegativeModal")
+  document.getElementById("addNegativeModal"),
+  { focus: false }
 );
 const exchangeModal = new bootstrap.Modal(
-  document.getElementById("exchangeModal")
+  document.getElementById("exchangeModal"),
+  { focus: false }
 );
 const editPositiveModal = new bootstrap.Modal(
-  document.getElementById("editPositiveModal")
+  document.getElementById("editPositiveModal"),
+  { focus: false }
 );
 const editNegativeModal = new bootstrap.Modal(
-  document.getElementById("editNegativeModal")
+  document.getElementById("editNegativeModal"),
+  { focus: false }
 );
 const resetConfirmModal = new bootstrap.Modal(
-  document.getElementById("resetConfirmModal")
+  document.getElementById("resetConfirmModal"),
+  { focus: false }
 );
 
 // 添加這個函數來檢查 LocalStorage
@@ -156,7 +289,14 @@ function checkLocalStorage() {
 }
 
 // 初始化頁面
-function initializePage() {
+async function initializePage() {
+  // Add this to your initializePage function at the beginning
+  if (!localStorage.getItem("dataMigrated")) {
+    await migrateToMongoDB();
+  }
+
+  await initializeData();
+
   if (!checkLocalStorage()) {
     alert(
       "警告：本應用需要瀏覽器的 LocalStorage 支持。請確保您沒有禁用 LocalStorage，並且不在隱私模式下運行。"
@@ -165,9 +305,9 @@ function initializePage() {
   loadChildData();
 
   // 監聽切換小孩選單
-  childSelect.addEventListener("change", function () {
+  childSelect.addEventListener("change", async function () {
     currentChild = this.value;
-    loadChildData();
+    await loadChildData();
   });
 
   // 監聽新增正向行為按鈕
@@ -262,7 +402,7 @@ function initializePage() {
   // 監聽確認兌換按鈕
   document
     .getElementById("confirmExchangeBtn")
-    .addEventListener("click", function () {
+    .addEventListener("click", async function () {
       const name = document.getElementById("exchangeItemName").value;
       const description = document.getElementById("exchangeItemDesc").value;
       const exchangePoints = parseInt(
@@ -273,13 +413,25 @@ function initializePage() {
       if (name && exchangePoints) {
         if (exchangePoints <= childrenData[currentChild].points) {
           childrenData[currentChild].points -= exchangePoints;
-          DataManager.updateChildData(currentChild, childrenData[currentChild]);
-          updateTotalPoints();
-          renderPointsCard();
-          exchangeModal.hide();
-          alert(
-            `成功兌換「${name}」(${category})，消耗了 ${exchangePoints} 點數！`
-          );
+          try {
+            await DataManager.saveData(childrenData);
+            await loadChildData();
+            
+            // Close modal before showing toast
+            const modal = bootstrap.Modal.getInstance(document.getElementById('exchangeModal'));
+            modal.hide();
+            
+            // Show success message
+            showToast(
+              `成功兌換「${name}」(${category})，消耗了 ${exchangePoints} 點數！`
+            );
+
+            // Reset form
+            document.getElementById("exchangeForm").reset();
+          } catch (error) {
+            console.error('Error saving exchange:', error);
+            showToast('兌換失敗，請重試');
+          }
         } else {
           document.getElementById("pointsWarning").style.display = "block";
         }
@@ -289,7 +441,7 @@ function initializePage() {
   // 監聽更新正向行為按鈕
   document
     .getElementById("updatePositiveBtn")
-    .addEventListener("click", function () {
+    .addEventListener("click", async function () {
       const id = parseInt(
         document.getElementById("editPositiveBehaviorId").value
       );
@@ -324,9 +476,20 @@ function initializePage() {
             points,
             tags,
           };
-          DataManager.updateChildData(currentChild, childrenData[currentChild]);
-          renderPositiveBehaviors();
-          editPositiveModal.hide();
+          try {
+            await DataManager.saveData(childrenData);
+            await loadChildData();
+            
+            // Close modal before showing toast
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editPositiveModal'));
+            modal.hide();
+            
+            // Show success message
+            showToast('正向行為已更新');
+          } catch (error) {
+            console.error('Error updating positive behavior:', error);
+            showToast('更新失敗，請重試');
+          }
         }
       }
     });
@@ -334,7 +497,7 @@ function initializePage() {
   // 監聽更新需改善行為按鈕
   document
     .getElementById("updateNegativeBtn")
-    .addEventListener("click", function () {
+    .addEventListener("click", async function () {
       const id = parseInt(
         document.getElementById("editNegativeBehaviorId").value
       );
@@ -369,9 +532,21 @@ function initializePage() {
             points,
             tags,
           };
-          DataManager.updateChildData(currentChild, childrenData[currentChild]);
-          renderNegativeBehaviors();
-          editNegativeModal.hide();
+          
+          try {
+            await DataManager.saveData(childrenData);
+            await loadChildData();
+            
+            // Close modal before showing toast
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editNegativeModal'));
+            modal.hide();
+            
+            // Show success message
+            showToast('需改善行為已更新');
+          } catch (error) {
+            console.error('Error updating negative behavior:', error);
+            showToast('更新失敗，請重試');
+          }
         }
       }
     });
@@ -394,7 +569,7 @@ function initializePage() {
   });
 
   // 確認重置
-  confirmResetBtn.addEventListener("click", function () {
+  confirmResetBtn.addEventListener("click", async function () {
     if (resetConfirmInput.value === "確定清空") {
       // 清空所有數據
       localStorage.clear();
@@ -406,11 +581,11 @@ function initializePage() {
       currentPage = 1;
 
       // 保存預設數據
-      DataManager.saveData(childrenData);
-      DataManager.saveBehaviorCounter(behaviorIdCounter);
+      await DataManager.saveData(childrenData);
+      await DataManager.saveBehaviorCounter(behaviorIdCounter);
 
       // 重新載入頁面
-      loadChildData();
+      await loadChildData();
 
       // 關閉 Modal
       resetConfirmModal.hide();
@@ -422,9 +597,13 @@ function initializePage() {
 }
 
 // 加載小孩數據
-function loadChildData() {
+async function loadChildData() {
   currentPage = 1;
   localStorage.setItem("currentChild", currentChild);
+  
+  // Fetch fresh data from MongoDB
+  childrenData = await DataManager.getData();
+  
   childNameElement.textContent = `${currentChild}的集點卡`;
   updateTotalPoints();
   renderPointsCard();
@@ -751,15 +930,15 @@ function deleteNegativeBehavior(id) {
 }
 
 // 添加重置功能
-function resetAllData() {
+async function resetAllData() {
   if (confirm("確定要重置所有數據嗎？這將清除所有積分和行為記錄。")) {
     localStorage.clear();
     childrenData = DEFAULT_CHILDREN_DATA;
     behaviorIdCounter = { positive: 3, negative: 3 };
     currentChild = "Audrey";
-    DataManager.saveData(childrenData);
-    DataManager.saveBehaviorCounter(behaviorIdCounter);
-    loadChildData();
+    await DataManager.saveData(childrenData);
+    await DataManager.saveBehaviorCounter(behaviorIdCounter);
+    await loadChildData();
   }
 }
 
@@ -807,7 +986,11 @@ function showToast(message) {
   });
 }
 // // 頁面加載後初始化
-document.addEventListener("DOMContentLoaded", initializePage);
+document.addEventListener("DOMContentLoaded", () => {
+  initializePage().catch(error => {
+    console.error("Error initializing page:", error);
+  });
+});
 
 // Toastify({
 //   text: "這是一個 Toast 訊息！",

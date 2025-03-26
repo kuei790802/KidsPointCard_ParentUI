@@ -346,13 +346,15 @@
       class="modal fade"
       id="exchangeModal"
       tabindex="-1"
-      aria-hidden="true"
-      data-bs-backdrop="static"
+      aria-labelledby="exchangeModalLabel"
+      aria-modal="true"
+      role="dialog"
+      data-bs-focus="false"
     >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">兌換獎勵</h5>
+            <h5 class="modal-title" id="exchangeModalLabel">兌換獎勵</h5>
             <button
               type="button"
               class="btn-close"
@@ -437,13 +439,17 @@
       class="modal fade"
       id="editPositiveModal"
       tabindex="-1"
-      aria-hidden="true"
-      data-bs-backdrop="static"
+      aria-labelledby="editPositiveModalLabel"
+      aria-modal="true"
+      role="dialog"
+      data-bs-focus="false"
     >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">編輯正向行為</h5>
+            <h5 class="modal-title" id="editPositiveModalLabel">
+              編輯正向行為
+            </h5>
             <button
               type="button"
               class="btn-close"
@@ -558,13 +564,17 @@
       class="modal fade"
       id="editNegativeModal"
       tabindex="-1"
-      aria-hidden="true"
-      data-bs-backdrop="static"
+      aria-labelledby="editNegativeModalLabel"
+      aria-modal="true"
+      role="dialog"
+      data-bs-focus="false"
     >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">編輯需改善行為</h5>
+            <h5 class="modal-title" id="editNegativeModalLabel">
+              編輯需改善行為
+            </h5>
             <button
               type="button"
               class="btn-close"
